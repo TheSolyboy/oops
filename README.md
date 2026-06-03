@@ -5,7 +5,7 @@
 **Typed the wrong command? Just say `oops`.**
 
 A tiny shell assistant that takes your last failed command, asks an AI to fix it,
-and drops the corrected command straight onto your clipboard.
+and offers to run the corrected command right there in your shell.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh-1f425f.svg)](#requirements)
@@ -23,13 +23,11 @@ git: 'stahtus' is not a git command. See 'git --help'.
 $ oops
 oops: re-running "git stahtus" to capture the error...
 oops: asking anthropic (claude-haiku-4-5-20251001)...
-
-git status
-
-oops: copied to clipboard — paste with Ctrl+V (or Cmd+V) and press Enter.
+oops: git status
+Run it? [Y/n]
 ```
 
-You press <kbd>Ctrl</kbd>+<kbd>V</kbd>, then <kbd>Enter</kbd>. Done.
+You press <kbd>Enter</kbd> and the fixed command runs. Done.
 
 ## How it works
 
@@ -38,8 +36,8 @@ You press <kbd>Ctrl</kbd>+<kbd>V</kbd>, then <kbd>Enter</kbd>. Done.
 3. `oops` grabs your last command, re-runs it to capture the error output, and
    sends both to your configured AI provider.
 4. The AI replies with **only** the corrected command.
-5. `oops` prints it and copies it to your clipboard.
-6. You paste and run it.
+5. `oops` shows it and asks `Run it? [Y/n]`.
+6. Press Enter and it runs in your current shell.
 
 No daemon, no telemetry, no Python or Node — just a single shell function and `curl`.
 
@@ -118,7 +116,6 @@ Edit it by hand, or just run `oops config` again.
 - **bash** or **zsh**
 - **curl** (required)
 - **jq** (recommended — most reliable JSON parsing; a pure-bash fallback is used otherwise)
-- A clipboard tool (optional, for auto-copy): `xclip`, `xsel`, `wl-clipboard`, or `pbcopy` on macOS
 
 ## Privacy
 

@@ -269,27 +269,6 @@ _oops_clean() {
   printf '%s' "$s"
 }
 
-_oops_copy() {
-  local text="$1"
-  if command -v pbcopy >/dev/null 2>&1; then
-    printf '%s' "$text" | pbcopy 2>/dev/null && return 0
-  fi
-  if command -v wl-copy >/dev/null 2>&1; then
-    printf '%s' "$text" | wl-copy 2>/dev/null && return 0
-  fi
-  if command -v xclip >/dev/null 2>&1; then
-    printf '%s' "$text" | xclip -selection clipboard 2>/dev/null && return 0
-  fi
-  if command -v xsel >/dev/null 2>&1; then
-    printf '%s' "$text" | xsel --clipboard --input 2>/dev/null && return 0
-  fi
-  # WSL / Git-Bash on Windows: fall back to the Windows clipboard.
-  if command -v clip.exe >/dev/null 2>&1; then
-    printf '%s' "$text" | clip.exe 2>/dev/null && return 0
-  fi
-  return 1
-}
-
 # ---------------------------------------------------------------------------
 # Finding the last command
 # ---------------------------------------------------------------------------
@@ -345,12 +324,19 @@ _oops_run() {
     return 1
   fi
 
-  printf '%s\n' "$fix"
-  if _oops_copy "$fix"; then
-    printf 'oops: copied to clipboard — paste with Ctrl+V (or Cmd+V) and press Enter.\n' >&2
-  else
-    printf 'oops: install xclip, xsel, or wl-clipboard to enable auto-copy.\n' >&2
-  fi
+  printf 'oops: %s\n' "$fix" >&2
+  local ans=""
+  printf 'Run it? [Y/n] ' > /dev/tty
+  IFS= read -r ans < /dev/tty || ans="n"
+  case "$ans" in
+    ""|y|Y|yes|YES)
+      eval "$fix"
+      ;;
+    *)
+      printf 'oops: cancelled.\n' >&2
+      return 1
+      ;;
+  esac
 }
 
 _oops_help() {

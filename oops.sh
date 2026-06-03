@@ -70,7 +70,7 @@ _oops_setup() {
     printf '  1) Anthropic (Claude)\n'
     printf '  2) OpenRouter\n'
     printf '  3) Ollama (local)\n'
-    printf '  4) OpenCode (opencode serve)\n'
+    printf '  4) OpenCode (Go / Zen cloud)\n'
   } > /dev/tty
 
   local choice
@@ -100,11 +100,11 @@ _oops_setup() {
       OOPS_MODEL=$(_oops_ask "Model" "${OOPS_MODEL:-llama3.2}")
       ;;
     opencode)
-      printf 'opencode talks to a running "opencode serve" instance.\n' > /dev/tty
-      printf 'The model must be "providerID/modelID" (e.g. anthropic/claude-haiku-4-5).\n' > /dev/tty
-      OOPS_BASE_URL=$(_oops_ask "opencode server URL" "${OOPS_BASE_URL:-http://localhost:4096}")
-      OOPS_API_KEY=$(_oops_ask_secret "API key (leave blank if none)")
-      OOPS_MODEL=$(_oops_ask "Model (provider/model)" "${OOPS_MODEL:-anthropic/claude-haiku-4-5-20251001}")
+      printf 'opencode Go/Zen is a cloud, OpenAI-compatible API.\n' > /dev/tty
+      printf 'Get an API key from https://opencode.ai/auth\n' > /dev/tty
+      OOPS_BASE_URL=$(_oops_ask "Base URL" "${OOPS_BASE_URL:-https://opencode.ai/zen/go/v1}")
+      OOPS_API_KEY=$(_oops_ask_secret "opencode API key")
+      OOPS_MODEL=$(_oops_ask "Model" "${OOPS_MODEL:-glm-5.1}")
       ;;
   esac
 
@@ -201,12 +201,6 @@ _oops_request() {
   user_json=$(printf '%s' "$user" | _oops_json_string)
   model_json=$(printf '%s' "$OOPS_MODEL" | _oops_json_string)
 
-  # opencode speaks its own session-based API, not OpenAI chat completions.
-  if [ "$OOPS_PROVIDER" = "opencode" ]; then
-    _oops_request_opencode "$sys" "$user"
-    return
-  fi
-
   local url body filter
   local -a headers
   headers=(-H "content-type: application/json")
@@ -232,6 +226,13 @@ _oops_request() {
         "$model_json" "$sys_json" "$user_json")
       filter='.message.content'
       ;;
+    opencode)
+      url="${OOPS_BASE_URL:-https://opencode.ai/zen/go/v1}/chat/completions"
+      [ -n "$OOPS_API_KEY" ] && headers+=(-H "Authorization: Bearer $OOPS_API_KEY")
+      body=$(printf '{"model":%s,"messages":[{"role":"system","content":%s},{"role":"user","content":%s}]}' \
+        "$model_json" "$sys_json" "$user_json")
+      filter='.choices[0].message.content'
+      ;;
     *)
       printf 'oops: unknown provider "%s". Run: oops config\n' "$OOPS_PROVIDER" >&2
       return 1
@@ -243,55 +244,6 @@ _oops_request() {
   out=$(printf '%s' "$raw" | _oops_json_get "$filter")
   if [ -z "$out" ]; then
     printf 'oops: the provider returned no command. Raw response:\n%s\n' "$raw" >&2
-    return 1
-  fi
-  printf '%s' "$out"
-}
-
-# opencode serve is an agentic coding server, not a chat-completions endpoint.
-# Flow: create a session, post the prompt to it, read the assistant's text parts.
-_oops_request_opencode() {
-  local sys="$1" user="$2"
-  local base prov mid sid
-  local -a headers
-  headers=(-H "content-type: application/json")
-  [ -n "$OOPS_API_KEY" ] && headers+=(-H "Authorization: Bearer $OOPS_API_KEY")
-  base="${OOPS_BASE_URL:-http://localhost:4096}"
-  base="${base%/}"
-
-  if ! command -v jq >/dev/null 2>&1; then
-    printf 'oops: the opencode provider needs jq to parse responses. Install jq and retry.\n' >&2
-    return 1
-  fi
-
-  prov="${OOPS_MODEL%%/*}"
-  mid="${OOPS_MODEL#*/}"
-  if [ -z "$mid" ] || [ "$prov" = "$OOPS_MODEL" ]; then
-    printf 'oops: opencode needs OOPS_MODEL as "providerID/modelID" (e.g. anthropic/claude-haiku-4-5).\n' >&2
-    printf '      Got "%s". Set it with: oops model <provider/model>\n' "$OOPS_MODEL" >&2
-    return 1
-  fi
-
-  local create
-  create=$(curl -sS --max-time 30 "$base/session" "${headers[@]}" -d '{"title":"oops"}' 2>&1)
-  sid=$(printf '%s' "$create" | jq -r '.id // empty' 2>/dev/null)
-  if [ -z "$sid" ]; then
-    printf 'oops: could not create an opencode session at %s/session.\nResponse: %s\n' "$base" "$create" >&2
-    return 1
-  fi
-
-  local text text_json prov_json mid_json body raw out
-  text=$(printf '%s\n\n%s' "$sys" "$user")
-  text_json=$(printf '%s' "$text" | _oops_json_string)
-  prov_json=$(printf '%s' "$prov" | _oops_json_string)
-  mid_json=$(printf '%s' "$mid" | _oops_json_string)
-  body=$(printf '{"model":{"providerID":%s,"modelID":%s},"parts":[{"type":"text","text":%s}]}' \
-    "$prov_json" "$mid_json" "$text_json")
-
-  raw=$(curl -sS --max-time 120 "$base/session/$sid/message" "${headers[@]}" -d "$body" 2>&1)
-  out=$(printf '%s' "$raw" | jq -r '[.parts[]? | select(.type=="text") | .text] | join("")' 2>/dev/null)
-  if [ -z "$out" ]; then
-    printf 'oops: opencode returned no text. Raw response:\n%s\n' "$raw" >&2
     return 1
   fi
   printf '%s' "$out"
@@ -404,7 +356,7 @@ oops — fix your last shell command with AI
 usage:
   oops                  fix the last command that failed
   oops config           re-run the interactive setup
-  oops model <name>     switch the model (opencode wants "provider/model")
+  oops model <name>     switch the model
   oops provider <name>  switch provider (anthropic|openrouter|ollama|opencode)
   oops help             show this help
   oops version          show the version

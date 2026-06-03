@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        env:
+          # SC1090/SC1091: sourcing files resolved at runtime, not lintable.
+          SHELLCHECK_OPTS: -e SC1090 -e SC1091
+        with:
+          additional_files: 'oops.sh install.sh'

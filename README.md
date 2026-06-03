@@ -9,7 +9,7 @@ and drops the corrected command straight onto your clipboard.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh-1f425f.svg)](#requirements)
-[![CI](https://github.com/Soly/oops/actions/workflows/ci.yml/badge.svg)](https://github.com/Soly/oops/actions/workflows/ci.yml)
+[![CI](https://github.com/TheSolyboy/oops/actions/workflows/ci.yml/badge.svg)](https://github.com/TheSolyboy/oops/actions/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
 </div>
@@ -46,7 +46,7 @@ No daemon, no telemetry, no Python or Node — just a single shell function and 
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Soly/oops/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TheSolyboy/oops/main/install.sh | bash
 ```
 
 The installer will:
@@ -62,7 +62,7 @@ Then restart your shell (or `source` the file it printed) and you are ready.
 <summary>Manual install (from a clone)</summary>
 
 ```sh
-git clone https://github.com/Soly/oops.git
+git clone https://github.com/TheSolyboy/oops.git
 cd oops
 ./install.sh
 ```

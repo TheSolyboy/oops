@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # oops — fix your last shell command with AI.
 # This file is meant to be sourced from ~/.bashrc or ~/.zshrc.
-# https://github.com/Soly/oops
+# https://github.com/TheSolyboy/oops
 # shellcheck shell=bash
 
 OOPS_VERSION="0.1.0"

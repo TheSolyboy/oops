@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # oops installer — works as a local script or via `curl -fsSL ... | bash`.
-# https://github.com/Soly/oops
+# https://github.com/TheSolyboy/oops
 set -eo pipefail
 
-OOPS_REPO="${OOPS_REPO:-Soly/oops}"
+OOPS_REPO="${OOPS_REPO:-TheSolyboy/oops}"
 OOPS_BRANCH="${OOPS_BRANCH:-main}"
 RAW_BASE="https://raw.githubusercontent.com/${OOPS_REPO}/${OOPS_BRANCH}"
 

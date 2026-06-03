@@ -82,6 +82,14 @@ The installer will:
 > [!IMPORTANT]
 > Open a **new** PowerShell/CMD window after installing so the profile and `PATH` changes take effect. The same `oops` works in both shells — it reads your last command from each shell's own history.
 
+> [!NOTE]
+> If you see *"running scripts is disabled on this system"*, your execution policy is blocking local scripts. Allow them once (user-scoped, Microsoft's recommended default) and finish setup:
+>
+> ```powershell
+> Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+> oops config
+> ```
+
 <details>
 <summary>Manual install (from a clone)</summary>
 

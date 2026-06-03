@@ -30,6 +30,8 @@ foreach ($f in 'oops.ps1', 'oops.cmd') {
     Write-Host "Downloading $f..."
     Invoke-WebRequest -Uri "$rawBase/$f" -OutFile $dest
   }
+  # Clear the "downloaded from internet" mark so RemoteSigned will load it.
+  Unblock-File $dest -ErrorAction SilentlyContinue
 }
 Write-Host "  -> $dir"
 
@@ -57,11 +59,24 @@ if (($userPath -split ';') -notcontains $dir) {
 }
 
 # 4. Run the interactive setup (provider, key, model).
-. $ps1
-Invoke-OopsSetup
+#    Dot-sourcing a .ps1 from disk obeys the execution policy, so bail out with
+#    clear instructions if local scripts are blocked.
+$policy = Get-ExecutionPolicy
+if ($policy -eq 'Restricted' -or $policy -eq 'AllSigned') {
+  Write-Host ''
+  Write-Host "  Your PowerShell execution policy is '$policy', which blocks local scripts."
+  Write-Host '  Allow them once (safe, user-scoped) and finish setup with:'
+  Write-Host ''
+  Write-Host '      Set-ExecutionPolicy -Scope CurrentUser RemoteSigned'
+  Write-Host '      oops config'
+  Write-Host ''
+} else {
+  . $ps1
+  Invoke-OopsSetup
 
-Write-Host ''
-Write-Host '  Done!'
-Write-Host '   - PowerShell: open a new window (or run the dot-source line) and type: oops'
-Write-Host '   - CMD: open a new window so the PATH change takes effect, then type: oops'
-Write-Host ''
+  Write-Host ''
+  Write-Host '  Done!'
+  Write-Host '   - PowerShell: open a new window (or run the dot-source line) and type: oops'
+  Write-Host '   - CMD: open a new window so the PATH change takes effect, then type: oops'
+  Write-Host ''
+}

@@ -1,16 +1,19 @@
 <div align="center">
 
-# oops
+# oops 🫠
 
 **Typed the wrong command? Just say `oops`.**
 
-A tiny shell assistant that takes your last failed command, asks an AI to fix it,
-and offers to run the corrected command right there in your shell.
+Like [`thefuck`](https://github.com/nvbn/thefuck), but it actually *reads the error message*.
+oops grabs your last failed command, sends it and its real error output to an AI,
+then offers to run the corrected command right there in your shell.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh-1f425f.svg)](#requirements)
 [![CI](https://github.com/TheSolyboy/oops/actions/workflows/ci.yml/badge.svg)](https://github.com/TheSolyboy/oops/actions/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
+
+[Install](#-install) · [Providers](#-providers) · [Usage](#-usage) · [Config](#-configuration) · [Privacy](#-privacy)
 
 </div>
 
@@ -22,26 +25,26 @@ git: 'stahtus' is not a git command. See 'git --help'.
 
 $ oops
 oops: re-running "git stahtus" to capture the error...
-oops: asking anthropic (claude-haiku-4-5-20251001)...
+oops: asking opencode (glm-5.1)...
 oops: git status
-Run it? [Y/n]
+Run it? [Y/n] ▏
 ```
 
-You press <kbd>Enter</kbd> and the fixed command runs. Done.
+Press <kbd>Enter</kbd> — the fixed command runs in your current shell. That's it.
 
-## How it works
+---
 
-1. You run a command and it fails.
-2. You type **`oops`**.
-3. `oops` grabs your last command, re-runs it to capture the error output, and
-   sends both to your configured AI provider.
-4. The AI replies with **only** the corrected command.
-5. `oops` shows it and asks `Run it? [Y/n]`.
-6. Press Enter and it runs in your current shell.
+## ✨ Why oops
 
-No daemon, no telemetry, no Python or Node — just a single shell function and `curl`.
+- 🧠 **It reads the error.** oops re-runs your command and feeds the *actual* stderr to the model — not just the typo. So it fixes intent (`kill 8080` → `kill $(lsof -t -i:8080)`), not only spelling.
+- ⚡ **It runs the fix.** No copy-paste, no clipboard, no display required. Confirm with Enter and it executes in your shell — so `cd`, `sudo`, and env changes all work.
+- 🔌 **Bring your own brain.** Anthropic, OpenRouter, OpenCode Go/Zen, or local Ollama — switch providers with one command.
+- 🪶 **Tiny and honest.** One shell function and `curl`. No daemon, no Python, no Node, no telemetry.
+- 🔒 **Stays local if you want.** Point it at Ollama and nothing ever leaves your machine.
 
-## Install
+---
+
+## 🚀 Install
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/TheSolyboy/oops/main/install.sh | bash
@@ -54,7 +57,10 @@ The installer will:
 3. Walk you through picking a **provider**, **API key**, and **model**
 4. Save your config to `~/.config/oops/config`
 
-Then restart your shell (or `source` the file it printed) and you are ready.
+Then restart your shell (or `source` the file it printed) and you're ready.
+
+> [!IMPORTANT]
+> `curl … | bash` sources oops into a *subshell*, which can't touch the shell you're typing in. After installing or updating, **open a new terminal** or run `source ~/.local/share/oops/oops.sh` to load the new version.
 
 <details>
 <summary>Manual install (from a clone)</summary>
@@ -69,25 +75,32 @@ The installer copies `oops.sh` out of the checkout instead of downloading it.
 
 </details>
 
-## Providers
+---
 
-Pick one during setup (or switch later with `oops provider <name>`).
+## 🔌 Providers
+
+Pick one during setup, or switch later with `oops provider <name>`.
 
 | Provider | Needs | Notes |
 | --- | --- | --- |
 | **Anthropic** | API key | Claude models, e.g. `claude-haiku-4-5-20251001` |
 | **OpenRouter** | API key | Any model slug, e.g. `anthropic/claude-3.5-haiku` |
-| **Ollama** | base URL | Runs fully **local**, e.g. model `llama3.2` |
-| **OpenCode** | base URL (+ optional key) | Any OpenAI-compatible endpoint |
+| **OpenCode** | API key | OpenCode Go/Zen cloud — default `https://opencode.ai/zen/go/v1`, models like `glm-5.1` |
+| **Ollama** | — | Runs fully **local**, e.g. model `llama3.2`. Nothing leaves your machine. |
 
-Where to get a key:
+**Where to get a key:**
 
 - **Anthropic** — <https://console.anthropic.com/>
 - **OpenRouter** — <https://openrouter.ai/keys>
-- **Ollama** — nothing to buy; `ollama serve` and pull a model
-- **OpenCode** — point it at your local OpenAI-compatible server
+- **OpenCode** — subscribe to Go/Zen and copy your key from <https://opencode.ai/auth>
+- **Ollama** — nothing to buy; run `ollama serve` and pull a model
 
-## Usage
+> [!TIP]
+> The **OpenCode** provider speaks plain OpenAI-compatible chat completions, so you can point `OOPS_BASE_URL` at *any* compatible endpoint — a local vLLM/LM Studio server, a proxy, whatever.
+
+---
+
+## 🛠 Usage
 
 ```sh
 oops                  # fix the last command that failed
@@ -98,37 +111,50 @@ oops help             # show help
 oops version          # show the version
 ```
 
-## Configuration
+When oops shows a fix it asks `Run it? [Y/n]`:
+
+- <kbd>Enter</kbd> or `y` → run it in your current shell
+- anything else → cancel, nothing happens
+
+---
+
+## ⚙️ Configuration
 
 Everything lives in `~/.config/oops/config` (mode `600`, since it holds your key):
 
 ```sh
-OOPS_PROVIDER="anthropic"
-OOPS_MODEL="claude-haiku-4-5-20251001"
+OOPS_PROVIDER="opencode"
+OOPS_MODEL="glm-5.1"
 OOPS_API_KEY="sk-..."
-OOPS_BASE_URL=""        # used by Ollama / OpenCode
+OOPS_BASE_URL="https://opencode.ai/zen/go/v1"   # used by OpenCode / Ollama
 ```
 
 Edit it by hand, or just run `oops config` again.
 
-## Requirements
+---
 
-- **bash** or **zsh**
-- **curl** (required)
-- **jq** (recommended — most reliable JSON parsing; a pure-bash fallback is used otherwise)
-
-## Privacy
+## 🔒 Privacy
 
 `oops` sends your failed command and its error output to the provider you choose.
 If that matters to you, use **Ollama** — it runs entirely on your machine and
 nothing leaves your computer.
 
-> [!NOTE]
+> [!WARNING]
 > To capture the error message, `oops` **re-runs your last command** (stdout and
-> stderr are captured). This is harmless for typos and bad flags, but be mindful
-> if your last command had side effects.
+> stderr are captured). Harmless for typos and bad flags — but be mindful if your
+> last command had side effects.
 
-## Uninstall
+---
+
+## 📦 Requirements
+
+- **bash** or **zsh**
+- **curl** *(required)*
+- **jq** *(recommended — most reliable JSON parsing; a pure-bash fallback is used otherwise)*
+
+---
+
+## 🧹 Uninstall
 
 ```sh
 rm -rf ~/.local/share/oops ~/.config/oops
@@ -136,7 +162,9 @@ rm -rf ~/.local/share/oops ~/.config/oops
 
 Then remove the `# oops shell assistant` block from your `~/.bashrc` / `~/.zshrc`.
 
-## Contributing
+---
+
+## 🤝 Contributing
 
 Issues and PRs are welcome. The whole tool is two shell scripts:
 
@@ -148,6 +176,8 @@ CI runs [ShellCheck](https://www.shellcheck.net/) on both. Run it locally with:
 ```sh
 shellcheck oops.sh install.sh
 ```
+
+---
 
 ## License
 

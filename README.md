@@ -4,11 +4,12 @@
 
 # oops 🫠
 
-**Typed the wrong command? Just say `oops`.**
+**Don't remember the exact flags? Type it roughly and say `oops`.**
 
-Like [`thefuck`](https://github.com/nvbn/thefuck), but it actually *reads the error message*.
-oops grabs your last failed command, sends it and its real error output to an AI,
-then offers to run the corrected command right there in your shell.
+Half-remember a command, guess at the syntax, watch it fail — then run `oops`.
+It reads the *actual* error, works out what you meant, and runs the corrected
+command right there in your shell. Like [`thefuck`](https://github.com/nvbn/thefuck),
+but it reads the error instead of pattern-matching the command.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh%20%7C%20pwsh%20%7C%20cmd-1f425f.svg)](#requirements)
@@ -22,13 +23,13 @@ then offers to run the corrected command right there in your shell.
 ---
 
 ```console
-$ git stahtus
-git: 'stahtus' is not a git command. See 'git --help'.
+$ tar unzip backup.tar.gz
+tar: You must specify one of the '-Acdtrux', '--delete' or '--test-label' options
 
 $ oops
-oops: re-running "git stahtus" to capture the error...
+oops: re-running "tar unzip backup.tar.gz" to capture the error...
 oops: asking opencode (glm-5.1)...
-oops: git status
+oops: tar -xzf backup.tar.gz
 Run it? [Y/n] ▏
 ```
 
@@ -38,10 +39,10 @@ Press <kbd>Enter</kbd> — the fixed command runs in your current shell. That's 
 
 ## ✨ Why oops
 
-- 🧠 **It reads the error.** oops re-runs your command and feeds the *actual* stderr to the model — not just the typo. So it fixes intent (`kill 8080` → `kill $(lsof -t -i:8080)`), not only spelling.
+- 🧠 **Stop memorizing flags.** Type the command how you *think* it goes. oops reads the real error and turns your guess into what you actually meant — `tar unzip x.tar.gz` → `tar -xzf x.tar.gz`, `kill 8080` → `kill $(lsof -t -i:8080)`.
 - ⚡ **It runs the fix.** No copy-paste, no clipboard, no display required. Confirm with Enter and it executes in your shell — so `cd`, `sudo`, and env changes all work.
 - 🔌 **Bring your own brain.** Anthropic, OpenRouter, OpenCode Go/Zen, or local Ollama — switch providers with one command.
-- 🪶 **Tiny and honest.** One shell function and `curl`. No daemon, no Python, no Node, no telemetry.
+- 🪶 **Tiny and honest.** Just shell scripts. No daemon, no Python, no Node, no telemetry.
 - 🔒 **Stays local if you want.** Point it at Ollama and nothing ever leaves your machine.
 
 ---
@@ -54,17 +55,10 @@ Press <kbd>Enter</kbd> — the fixed command runs in your current shell. That's 
 curl -fsSL https://raw.githubusercontent.com/TheSolyboy/oops/main/install.sh | bash
 ```
 
-The installer will:
-
-1. Drop the shell integration into `~/.local/share/oops/oops.sh`
-2. Add a `source` line to your `~/.bashrc` or `~/.zshrc`
-3. Walk you through picking a **provider**, **API key**, and **model**
-4. Save your config to `~/.config/oops/config`
-
-Then restart your shell (or `source` the file it printed) and you're ready.
+It drops the integration into `~/.local/share/oops/`, adds a `source` line to your `~/.bashrc` / `~/.zshrc`, and walks you through picking a provider, key, and model.
 
 > [!IMPORTANT]
-> `curl … | bash` sources oops into a *subshell*, which can't touch the shell you're typing in. After installing or updating, **open a new terminal** or run `source ~/.local/share/oops/oops.sh` to load the new version.
+> `curl … | bash` runs in a *subshell* and can't touch the shell you're typing in. After installing, **open a new terminal** or run `source ~/.local/share/oops/oops.sh`.
 
 ### Windows (PowerShell · CMD)
 
@@ -72,15 +66,10 @@ Then restart your shell (or `source` the file it printed) and you're ready.
 irm https://raw.githubusercontent.com/TheSolyboy/oops/main/install.ps1 | iex
 ```
 
-The installer will:
-
-1. Drop `oops.ps1` + `oops.cmd` into `%LOCALAPPDATA%\oops`
-2. Dot-source `oops.ps1` from your PowerShell `$PROFILE`
-3. Add the install dir to your user `PATH` (so `oops` works in CMD too)
-4. Walk you through picking a **provider**, **API key**, and **model** (saved to `%APPDATA%\oops\config.json`)
+It drops `oops.ps1` + `oops.cmd` into `%LOCALAPPDATA%\oops`, dot-sources from your PowerShell `$PROFILE`, adds the dir to your user `PATH` (so CMD works too), and walks you through setup.
 
 > [!IMPORTANT]
-> Open a **new** PowerShell/CMD window after installing so the profile and `PATH` changes take effect. The same `oops` works in both shells — it reads your last command from each shell's own history.
+> Open a **new** PowerShell/CMD window after installing so the profile and `PATH` changes take effect.
 
 > [!NOTE]
 > If you see *"running scripts is disabled on this system"*, your execution policy is blocking local scripts. Allow them once (user-scoped, Microsoft's recommended default) and finish setup:
@@ -126,15 +115,10 @@ Pick one during setup, or switch later with `oops provider <name>`.
 | **OpenCode** | API key | OpenCode Go/Zen cloud — default `https://opencode.ai/zen/go/v1`, models like `glm-5.1` |
 | **Ollama** | — | Runs fully **local**, e.g. model `llama3.2`. Nothing leaves your machine. |
 
-**Where to get a key:**
-
-- **Anthropic** — <https://console.anthropic.com/>
-- **OpenRouter** — <https://openrouter.ai/keys>
-- **OpenCode** — subscribe to Go/Zen and copy your key from <https://opencode.ai/auth>
-- **Ollama** — nothing to buy; run `ollama serve` and pull a model
+**Keys:** [Anthropic](https://console.anthropic.com/) · [OpenRouter](https://openrouter.ai/keys) · [OpenCode](https://opencode.ai/auth) · Ollama needs none — just `ollama serve` and pull a model.
 
 > [!TIP]
-> The **OpenCode** provider speaks plain OpenAI-compatible chat completions, so you can point `OOPS_BASE_URL` at *any* compatible endpoint — a local vLLM/LM Studio server, a proxy, whatever.
+> OpenCode speaks plain OpenAI-compatible chat completions, so `OOPS_BASE_URL` can point at *any* compatible endpoint (vLLM, LM Studio, a proxy, etc.).
 
 ---
 

@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/banner.svg" alt="oops — fix your last command with AI" width="760">
+
 # oops 🫠
 
 **Typed the wrong command? Just say `oops`.**

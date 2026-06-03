@@ -11,7 +11,7 @@ oops grabs your last failed command, sends it and its real error output to an AI
 then offers to run the corrected command right there in your shell.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh-1f425f.svg)](#requirements)
+[![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh%20%7C%20pwsh%20%7C%20cmd-1f425f.svg)](#requirements)
 [![CI](https://github.com/TheSolyboy/oops/actions/workflows/ci.yml/badge.svg)](https://github.com/TheSolyboy/oops/actions/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
@@ -48,6 +48,8 @@ Press <kbd>Enter</kbd> — the fixed command runs in your current shell. That's 
 
 ## 🚀 Install
 
+### macOS / Linux (bash · zsh)
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/TheSolyboy/oops/main/install.sh | bash
 ```
@@ -64,8 +66,26 @@ Then restart your shell (or `source` the file it printed) and you're ready.
 > [!IMPORTANT]
 > `curl … | bash` sources oops into a *subshell*, which can't touch the shell you're typing in. After installing or updating, **open a new terminal** or run `source ~/.local/share/oops/oops.sh` to load the new version.
 
+### Windows (PowerShell · CMD)
+
+```powershell
+irm https://raw.githubusercontent.com/TheSolyboy/oops/main/install.ps1 | iex
+```
+
+The installer will:
+
+1. Drop `oops.ps1` + `oops.cmd` into `%LOCALAPPDATA%\oops`
+2. Dot-source `oops.ps1` from your PowerShell `$PROFILE`
+3. Add the install dir to your user `PATH` (so `oops` works in CMD too)
+4. Walk you through picking a **provider**, **API key**, and **model** (saved to `%APPDATA%\oops\config.json`)
+
+> [!IMPORTANT]
+> Open a **new** PowerShell/CMD window after installing so the profile and `PATH` changes take effect. The same `oops` works in both shells — it reads your last command from each shell's own history.
+
 <details>
 <summary>Manual install (from a clone)</summary>
+
+**macOS / Linux:**
 
 ```sh
 git clone https://github.com/TheSolyboy/oops.git
@@ -73,7 +93,15 @@ cd oops
 ./install.sh
 ```
 
-The installer copies `oops.sh` out of the checkout instead of downloading it.
+**Windows:**
+
+```powershell
+git clone https://github.com/TheSolyboy/oops.git
+cd oops
+.\install.ps1
+```
+
+The installer copies the scripts out of the checkout instead of downloading them.
 
 </details>
 
@@ -150,13 +178,22 @@ nothing leaves your computer.
 
 ## 📦 Requirements
 
+**macOS / Linux:**
+
 - **bash** or **zsh**
 - **curl** *(required)*
 - **jq** *(recommended — most reliable JSON parsing; a pure-bash fallback is used otherwise)*
 
+**Windows:**
+
+- **Windows PowerShell 5.1** (built in) or **PowerShell 7+** — works in CMD too
+- No extra dependencies; networking and JSON are handled by PowerShell
+
 ---
 
 ## 🧹 Uninstall
+
+**macOS / Linux:**
 
 ```sh
 rm -rf ~/.local/share/oops ~/.config/oops
@@ -164,16 +201,27 @@ rm -rf ~/.local/share/oops ~/.config/oops
 
 Then remove the `# oops shell assistant` block from your `~/.bashrc` / `~/.zshrc`.
 
+**Windows:**
+
+```powershell
+Remove-Item -Recurse -Force "$env:LOCALAPPDATA\oops", "$env:APPDATA\oops"
+```
+
+Then remove the `# oops shell assistant` line from your PowerShell `$PROFILE`, and drop `%LOCALAPPDATA%\oops` from your user `PATH`.
+
 ---
 
 ## 🤝 Contributing
 
-Issues and PRs are welcome. The whole tool is two shell scripts:
+Issues and PRs are welcome. The tool is a handful of small scripts:
 
-- [`oops.sh`](oops.sh) — the sourced shell integration (the `oops` function)
-- [`install.sh`](install.sh) — the installer and interactive setup
+- [`oops.sh`](oops.sh) — the sourced shell integration for bash/zsh (the `oops` function)
+- [`install.sh`](install.sh) — the Unix installer and interactive setup
+- [`oops.ps1`](oops.ps1) — the PowerShell edition (also powers the CMD wrapper)
+- [`oops.cmd`](oops.cmd) — the CMD entry point
+- [`install.ps1`](install.ps1) — the Windows installer and interactive setup
 
-CI runs [ShellCheck](https://www.shellcheck.net/) on both. Run it locally with:
+CI runs [ShellCheck](https://www.shellcheck.net/) on the shell scripts. Run it locally with:
 
 ```sh
 shellcheck oops.sh install.sh
